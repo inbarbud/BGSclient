@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.12.3)
 project(Client)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -12,7 +12,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
 # the Boost::system imported target used below
 # embeds the include directories
 
-project(Client C CXX)
-add_executable(Client src/echoClient.cpp src/connectionHandler.cpp)
-target_link_libraries(Client Boost::system)
+project(BGSclient C CXX)
+add_executable(BGSclient src/echoClient.cpp src/connectionHandler.cpp)
+target_link_libraries(BGSclient Boost::system)
 

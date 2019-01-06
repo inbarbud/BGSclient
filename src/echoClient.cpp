@@ -28,28 +28,32 @@ void sendRegister(short opcode, string req, char buffer[],ConnectionHandler& c){
     shortToBytes(opcode,buffer);        //put opcode to buffer
     c.sendBytes(buffer,2);              //send
     //parse
-    string username = req.substr(0,req.find(' '));
-    string password = req.substr(req.find(' '));
+    int temp = req.find(' ');
+    string username = req.substr(0,temp);
+    string password = req.substr(temp+1,req.length());
     //send
     c.sendFrameAscii(username,'\0');
     c.sendFrameAscii(password,'\0');
+    c.sendBytes(new char[1]{(char)12},1);
 }
 
 void sendLogin(short opcode, string req, char buffer[],ConnectionHandler& c){
     shortToBytes(opcode,buffer);        //put opcode to buffer
     c.sendBytes(buffer,2);              //send
     //parse
-    string username = req.substr(0,req.find(' '));
-    string password = req.substr(req.find(' '));
+    int temp = req.find(' ');
+    string username = req.substr(0,temp);
+    string password = req.substr(temp+1,req.length());
     //send
     c.sendFrameAscii(username,'\0');
     c.sendFrameAscii(password,'\0');
+    c.sendBytes(new char[1]{(char)12},1);
 }
 
 void sendLogout(short opcode, char buffer[],ConnectionHandler& c){
     shortToBytes(opcode,buffer);        //put opcode to buffer
     c.sendBytes(buffer,2);              //send
-
+    c.sendBytes(new char[1]{(char)12},1);
     //req_length = 2;
 }
 
@@ -78,6 +82,7 @@ void sendFollow(short opcode, string req, char buffer[],ConnectionHandler& c) {
             NumOfUsers--;
         }
     }
+    c.sendBytes(new char[1]{(char)12},1);
 }
 
 void sendPost(short opcode, string req, char buffer[],ConnectionHandler& c) {
@@ -85,6 +90,7 @@ void sendPost(short opcode, string req, char buffer[],ConnectionHandler& c) {
     c.sendBytes(buffer, 2);              //send
     //send
     c.sendFrameAscii(req, '\0');
+    c.sendBytes(new char[1]{(char)12},1);
 }
 
 void sendPM(short opcode, string req, char buffer[],ConnectionHandler& c) {
@@ -97,45 +103,59 @@ void sendPM(short opcode, string req, char buffer[],ConnectionHandler& c) {
     //send
     c.sendFrameAscii(username,'\0');
     c.sendFrameAscii(content,'\0');
+    c.sendBytes(new char[1]{(char)12},1);
 }
 void sendUserlist(short opcode, char buffer[],ConnectionHandler& c) {
     shortToBytes(opcode,buffer);        //put opcode to buffer
     c.sendBytes(buffer,2);              //send
+    c.sendBytes(new char[1]{(char)12},1);
 }
 void sendStat(short opcode, string req, char buffer[],ConnectionHandler& c) {
     shortToBytes(opcode, buffer);        //put opcode to buffer
     c.sendBytes(buffer, 2);              //send
     //send
     c.sendFrameAscii(req, '\0');
+    c.sendBytes(new char[1]{(char)12},1);
 }
 
 void sendAcknowledge(char buffer[],ConnectionHandler& c){
     cout << "ACK " ;
-    c.getBytes(buffer,2);                            //read second opcode from buffer
-    short ackType = bytesToShort(buffer);            //second opcode
+    cout.flush();
+    char ack[2]=   {buffer[2],buffer[3]};            //read second opcode from buffer
+    short ackType = bytesToShort(ack);            //second opcode
     cout << ackType << " ";
+    cout.flush();
     if (ackType==4 || ackType==7){                   //follow or userlist
-        c.getBytes(buffer,2);
-        short numOfUsers = bytesToShort(buffer);
-        string numString = to_string(numOfUsers);
-        cout << numString+" ";
+        char num[2]=   {buffer[4],buffer[5]};
+        short numOfUsers = bytesToShort(num);
+        cout << numOfUsers+" ";
+        cout.flush();
         string user;
         while(numOfUsers>0)
         {
-            c.getFrameAscii(user,'\0');
-            cout << user.c_str()<<" ";
-            user = "";
+            int current = 6;
+            while(buffer[current]!=0){
+                cout << buffer[current];
+                cout.flush();
+                current++;
+            }
+            cout <<" ";
+            cout.flush();
             numOfUsers--;
         }
+        cout << endl;
 
     }
-    else if(ackType==8){                            //stat
-        //TODO:change
-        c.getBytes(buffer,6); // read 3 couples of bytes;
-        short NumPosts = bytesToShort(buffer);
-        short NumFollowers= bytesToShort(buffer+2);
-        short NumFollowing= bytesToShort(buffer+4);
-        cout << NumPosts << " " <<NumFollowers << " " <<NumFollowing ;
+    else if(ackType==8){
+        char num[2] = {buffer[2],buffer[3]};//stat
+        short NumPosts = bytesToShort(num);
+        num[0] = buffer[4];
+        num[1] = buffer[5];
+        short NumFollowers= bytesToShort(num);
+        num[0] = buffer[6];
+        num[1] = buffer[7];
+        short NumFollowing= bytesToShort(num);
+        cout << NumPosts << " " <<NumFollowers << " " <<NumFollowing << endl;
     }
     else if(ackType==3){                            //logout
         disconnected=true;
@@ -152,11 +172,11 @@ void sendNotification(char buffer[],ConnectionHandler& c){
     else
         cout << "POST " ;
     string posting_user;
-    c.getFrameAscii(posting_user,'\0');
+    //c.getFrameAscii(posting_user,'\0');
     //TODO:?
     cout << posting_user.c_str() << " " ;
     string content;
-    c.getFrameAscii(content,'\0');
+    //c.getFrameAscii(content,'\0');
     cout << content.c_str() << endl;
 
 }
@@ -183,16 +203,18 @@ public:
         const short bufsize = 1024;
         char buf[bufsize];
         while(!disconnected){
-            string answer;
+            char *answer = new char[1024];
+            cout << "waiting for server" << endl;
             if (!handler.getLine(answer)) {
                 cout << "Disconnected. Exiting...\n" << endl;
                 disconnected = true;
                 break;
             }
-            short answerOpCode= bytesToShort(buf);
+            char op[2] = {answer[0],answer[1]};
+            short answerOpCode= bytesToShort(op);
             //TODO:conditions?
             if(answerOpCode==10){
-                sendAcknowledge(buf,handler);
+                sendAcknowledge(answer,handler);
             }
             else if(answerOpCode==9){
                 sendNotification(buf,handler);
@@ -200,6 +222,7 @@ public:
             else if(answerOpCode==11){
                 sendError(buf,handler);
             }
+            delete(answer);
         }
     };
 
@@ -218,6 +241,7 @@ public:
         while (!disconnected) {
             string req;
             if (!logoutReq){
+                cout << "waiting for input" << endl;
                 getline(cin,req);
                 //TODO:check if there is no ' '?
                 string operation="";
