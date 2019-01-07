@@ -7,57 +7,56 @@
 using namespace std;
 
 
-
-bool disconnected = false;
+bool  disconnected =false;
 bool logoutReq = false;
+thread *t1;
 
-void shortToBytes(short num, char* bytesArr)
-{
+void shortToBytes(short num, char *bytesArr) {
     bytesArr[0] = ((num >> 8) & 0xFF);
     bytesArr[1] = (num & 0xFF);
 }
-short bytesToShort(char* bytesArr)
-{
-    short result = (short)((bytesArr[0] & 0xff) << 8);
-    result += (short)(bytesArr[1] & 0xff);
+
+short bytesToShort(char *bytesArr) {
+    short result = (short) ((bytesArr[0] & 0xff) << 8);
+    result += (short) (bytesArr[1] & 0xff);
     return result;
 }
 
 //TODO: parse func
-void sendRegister(short opcode, string req, char buffer[],ConnectionHandler& c){
-    shortToBytes(opcode,buffer);        //put opcode to buffer
-    c.sendBytes(buffer,2);              //send
+void sendRegister(short opcode, string req, char buffer[], ConnectionHandler &c) {
+    shortToBytes(opcode, buffer);        //put opcode to buffer
+    c.sendBytes(buffer, 2);              //send
     //parse
     int temp = req.find(' ');
-    string username = req.substr(0,temp);
-    string password = req.substr(temp+1,req.length());
+    string username = req.substr(0, temp);
+    string password = req.substr(temp + 1, req.length());
     //send
-    c.sendFrameAscii(username,'\0');
-    c.sendFrameAscii(password,'\0');
-    c.sendBytes(new char[1]{(char)12},1);
+    c.sendFrameAscii(username, '\0');
+    c.sendFrameAscii(password, '\0');
+    c.sendBytes(new char[1]{(char) 12}, 1);
 }
 
-void sendLogin(short opcode, string req, char buffer[],ConnectionHandler& c){
-    shortToBytes(opcode,buffer);        //put opcode to buffer
-    c.sendBytes(buffer,2);              //send
+void sendLogin(short opcode, string req, char buffer[], ConnectionHandler &c) {
+    shortToBytes(opcode, buffer);        //put opcode to buffer
+    c.sendBytes(buffer, 2);              //send
     //parse
     int temp = req.find(' ');
-    string username = req.substr(0,temp);
-    string password = req.substr(temp+1,req.length());
+    string username = req.substr(0, temp);
+    string password = req.substr(temp + 1, req.length());
     //send
-    c.sendFrameAscii(username,'\0');
-    c.sendFrameAscii(password,'\0');
-    c.sendBytes(new char[1]{(char)12},1);
+    c.sendFrameAscii(username, '\0');
+    c.sendFrameAscii(password, '\0');
+    c.sendBytes(new char[1]{(char) 12}, 1);
 }
 
-void sendLogout(short opcode, char buffer[],ConnectionHandler& c){
-    shortToBytes(opcode,buffer);        //put opcode to buffer
-    c.sendBytes(buffer,2);              //send
-    c.sendBytes(new char[1]{(char)12},1);
+void sendLogout(short opcode, char buffer[], ConnectionHandler &c) {
+    shortToBytes(opcode, buffer);        //put opcode to buffer
+    c.sendBytes(buffer, 2);              //send
+    c.sendBytes(new char[1]{(char) 12}, 1);
     //req_length = 2;
 }
 
-void sendFollow(short opcode, string req, char buffer[],ConnectionHandler& c) {
+void sendFollow(short opcode, string req, char buffer[], ConnectionHandler &c) {
 
     shortToBytes(opcode, buffer);        //put opcode to buffer
     c.sendBytes(buffer, 2);              //send
@@ -82,127 +81,114 @@ void sendFollow(short opcode, string req, char buffer[],ConnectionHandler& c) {
             NumOfUsers--;
         }
     }
-    c.sendBytes(new char[1]{(char)12},1);
+    c.sendBytes(new char[1]{(char) 12}, 1);
 }
 
-void sendPost(short opcode, string req, char buffer[],ConnectionHandler& c) {
+void sendPost(short opcode, string req, char buffer[], ConnectionHandler &c) {
     shortToBytes(opcode, buffer);        //put opcode to buffer
     c.sendBytes(buffer, 2);              //send
     //send
     c.sendFrameAscii(req, '\0');
-    c.sendBytes(new char[1]{(char)12},1);
+    c.sendBytes(new char[1]{(char) 12}, 1);
 }
 
-void sendPM(short opcode, string req, char buffer[],ConnectionHandler& c) {
-    shortToBytes(opcode,buffer);        //put opcode to buffer
-    c.sendBytes(buffer,2);              //send
+void sendPM(short opcode, string req, char buffer[], ConnectionHandler &c) {
+    shortToBytes(opcode, buffer);        //put opcode to buffer
+    c.sendBytes(buffer, 2);              //send
     //parse
     int i = req.find(' ');
-    string username = req.substr(0,i);
-    string content = req.substr(i+1);
+    string username = req.substr(0, i);
+    string content = req.substr(i + 1);
     //send
-    c.sendFrameAscii(username,'\0');
-    c.sendFrameAscii(content,'\0');
-    c.sendBytes(new char[1]{(char)12},1);
+    c.sendFrameAscii(username, '\0');
+    c.sendFrameAscii(content, '\0');
+    c.sendBytes(new char[1]{(char) 12}, 1);
 }
-void sendUserlist(short opcode, char buffer[],ConnectionHandler& c) {
-    shortToBytes(opcode,buffer);        //put opcode to buffer
-    c.sendBytes(buffer,2);              //send
-    c.sendBytes(new char[1]{(char)12},1);
+
+void sendUserlist(short opcode, char buffer[], ConnectionHandler &c) {
+    shortToBytes(opcode, buffer);        //put opcode to buffer
+    c.sendBytes(buffer, 2);              //send
+    c.sendBytes(new char[1]{(char) 12}, 1);
 }
-void sendStat(short opcode, string req, char buffer[],ConnectionHandler& c) {
+
+void sendStat(short opcode, string req, char buffer[], ConnectionHandler &c) {
     shortToBytes(opcode, buffer);        //put opcode to buffer
     c.sendBytes(buffer, 2);              //send
     //send
     c.sendFrameAscii(req, '\0');
-    c.sendBytes(new char[1]{(char)12},1);
+    c.sendBytes(new char[1]{(char) 12}, 1);
 }
 
-void sendAcknowledge(char buffer[],ConnectionHandler& c){
-    cout << "ACK " ;
+void sendAcknowledge(char buffer[], ConnectionHandler &c) {
+    cout << "ACK ";
     cout.flush();
-    char ack[2]=   {buffer[2],buffer[3]};            //read second opcode from buffer
+    char ack[2] = {buffer[2], buffer[3]};            //read second opcode from buffer
     short ackType = bytesToShort(ack);            //second opcode
     cout << ackType << " ";
     cout.flush();
-    if (ackType==4 || ackType==7){                   //follow or userlist
-        char num[2]=   {buffer[4],buffer[5]};
+    if (ackType == 4 || ackType == 7) {                   //follow or userlist
+        char num[2] = {buffer[4], buffer[5]};
         short numOfUsers = bytesToShort(num);
-        cout << numOfUsers+" ";
+        cout << numOfUsers + " ";
         cout.flush();
         string user;
-        while(numOfUsers>0)
-        {
+        while (numOfUsers > 0) {
             int current = 6;
-            while(buffer[current]!=0){
+            while (buffer[current] != 0) {
                 cout << buffer[current];
                 cout.flush();
                 current++;
             }
-            cout <<" ";
+            cout << " ";
             cout.flush();
             numOfUsers--;
         }
         cout << endl;
 
-    }
-    else if(ackType==8){
-        char num[2] = {buffer[2],buffer[3]};//stat
+    } else if (ackType == 8) {
+        char num[2] = {buffer[2], buffer[3]};//stat
         short NumPosts = bytesToShort(num);
         num[0] = buffer[4];
         num[1] = buffer[5];
-        short NumFollowers= bytesToShort(num);
+        short NumFollowers = bytesToShort(num);
         num[0] = buffer[6];
         num[1] = buffer[7];
-        short NumFollowing= bytesToShort(num);
-        cout << NumPosts << " " <<NumFollowers << " " <<NumFollowing << endl;
-    }
-    else if(ackType==3){                            //logout
-        disconnected=true;
+        short NumFollowing = bytesToShort(num);
+        cout << NumPosts << " " << NumFollowers << " " << NumFollowing << endl;
+    } else if (ackType == 3) {
+        disconnected = true;
     }
 }
 
 
-
-void sendNotification(char buffer[],ConnectionHandler& c){
-    cout << "NOTIFICATION ";
-    c.getBytes(buffer,1);                   //read messageType
-    if (buffer[0]==0)
+void sendNotification(char buffer[], ConnectionHandler &c) {
+    cout << "NOTIFICATION ";     //read messageType
+    if (buffer[0] == 0)
         cout << "PM ";
     else
-        cout << "POST " ;
+        cout << "POST ";
     string posting_user;
     //c.getFrameAscii(posting_user,'\0');
     //TODO:?
-    cout << posting_user.c_str() << " " ;
+    cout << posting_user.c_str() << " ";
     string content;
     //c.getFrameAscii(content,'\0');
     cout << content.c_str() << endl;
 
 }
-
-void sendError(char buffer[],ConnectionHandler& c){
-    cout << "Error ";
-    c.getBytes(buffer,2);
-    short err_req = bytesToShort(buffer);
-    if (err_req==3)                     //if logout request was errored
-        logoutReq = false;
-    cout << err_req  << endl;
-
-}
+void sendError(char buffer[], ConnectionHandler &c);
 
 
-
-class SocketListener{
+class SocketListener {
 private:
     ConnectionHandler &handler;
 public:
-    SocketListener(ConnectionHandler &connectionHandler) : handler(connectionHandler){}
+    SocketListener(ConnectionHandler &connectionHandler) : handler(connectionHandler) {}
 
-    void run(){
+    void run() {
         const short bufsize = 1024;
         char buf[bufsize];
-        while(!disconnected){
+        while (!disconnected) {
             char *answer = new char[1024];
             cout << "waiting for server" << endl;
             if (!handler.getLine(answer)) {
@@ -210,19 +196,17 @@ public:
                 disconnected = true;
                 break;
             }
-            char op[2] = {answer[0],answer[1]};
-            short answerOpCode= bytesToShort(op);
+            char op[2] = {answer[0], answer[1]};
+            short answerOpCode = bytesToShort(op);
             //TODO:conditions?
-            if(answerOpCode==10){
-                sendAcknowledge(answer,handler);
+            if (answerOpCode == 10) {
+                sendAcknowledge(answer, handler);
+            } else if (answerOpCode == 9) {
+                sendNotification(answer, handler);
+            } else if (answerOpCode == 11) {
+                sendError(answer, handler);
             }
-            else if(answerOpCode==9){
-                sendNotification(buf,handler);
-            }
-            else if(answerOpCode==11){
-                sendError(buf,handler);
-            }
-            delete(answer);
+            delete (answer);
         }
     };
 
@@ -240,54 +224,57 @@ public:
         char buf[bufsize];
         while (!disconnected) {
             string req;
-            if (!logoutReq){
+            if(!logoutReq) {
                 cout << "waiting for input" << endl;
-                getline(cin,req);
+                getline(cin, req);
                 //TODO:check if there is no ' '?
-                string operation="";
-                int temp = (int)req.find(' ');
-                if(temp==-1)
-                    operation=req;
+                string operation = "";
+                int temp = (int) req.find(' ');
+                if (temp == -1)
+                    operation = req;
                 else
-                    operation= req.substr(0,req.find(' '));
+                    operation = req.substr(0, req.find(' '));
 
-                if(operation.compare("REGISTER")==0){
-                    sendRegister(1,req.substr(9),buf,handler);
-                }
-                else if(operation.compare("LOGIN")==0){
-                    sendLogin(2,req.substr(6),buf,handler);
-                }
-                else if(operation.compare("LOGOUT")==0) {
-                    sendLogout(3,buf,handler);
+                if (operation.compare("REGISTER") == 0) {
+                    sendRegister(1, req.substr(9), buf, handler);
+                } else if (operation.compare("LOGIN") == 0) {
+                    sendLogin(2, req.substr(6), buf, handler);
+                } else if (operation.compare("LOGOUT") == 0) {
+                    sendLogout(3, buf, handler);
                     logoutReq = true;
-                }
-                else if(operation.compare("FOLLOW")==0) {
-                    sendFollow(4,req.substr(7),buf,handler);
-                }
-                else if(operation.compare("POST")==0) {
-                    sendPost(5,req.substr(5),buf,handler);
-                }
-                else if(operation.compare("PM")==0) {
-                    sendPM(6,req.substr(3),buf,handler);
-                }
-                else if(operation.compare("USERLIST")==0) {
-                    sendUserlist(7,buf,handler);
-                }
-                else if(operation.compare("STAT")==0) {
-                    sendStat(8,req.substr(5),buf,handler);
+                } else if (operation.compare("FOLLOW") == 0) {
+                    sendFollow(4, req.substr(7), buf, handler);
+                } else if (operation.compare("POST") == 0) {
+                    sendPost(5, req.substr(5), buf, handler);
+                } else if (operation.compare("PM") == 0) {
+                    sendPM(6, req.substr(3), buf, handler);
+                } else if (operation.compare("USERLIST") == 0) {
+                    sendUserlist(7, buf, handler);
+                } else if (operation.compare("STAT") == 0) {
+                    sendStat(8, req.substr(5), buf, handler);
                 }
             }
         }
-    };
+    }
 };
 
+void sendError(char buffer[], ConnectionHandler &c) {
+    cout << "Error ";
+    char err[2] = {buffer[2],buffer[3]};
+    short err_req = bytesToShort(err);
+    if (err_req == 3) {               //if logout request was errored
+        logoutReq = false;
+    }
+    cout << err_req << endl;
+
+}
 
 
 
 /**
 * This code assumes that the server replies the exact text the client sent it (as opposed to the practical session example)
 */
-int main (int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     if (argc < 3) {
         cerr << "Usage: " << argv[0] << " host port" << endl << endl;
         return -1;
@@ -297,18 +284,15 @@ int main (int argc, char *argv[]) {
     if (!connectionHandler.connect()) {
         cerr << "Cannot connect to " << argv[1] << ":" << atoi(argv[2]) << endl;
         return 1;
-    }
-    else{
+    } else {
         cout << "Connected" << endl;
     }
 
     KeyboardWriter keyboardWriter(connectionHandler);
     SocketListener socketListener(connectionHandler);
 
-    thread t1 (&KeyboardWriter::run,&keyboardWriter);
-    thread t2 (&SocketListener::run,&socketListener);
-
-
+    thread t1(&KeyboardWriter::run, &keyboardWriter);
+    thread t2(&SocketListener::run, &socketListener);
     t1.join();
     t2.join();
     return 0;
